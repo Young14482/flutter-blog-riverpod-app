@@ -58,9 +58,7 @@ class SessionGVM extends Notifier<SessionUser> {
     );
 
     // 3. Dio에 토큰 세팅
-    dio.options.headers = {
-      "Authorization": accessToken,
-    };
+    dio.options.headers = {"Authorization": accessToken};
     // Logger().d(dio.options.headers);
 
     Navigator.popAndPushNamed(mContext, "/post/list");
@@ -97,13 +95,35 @@ class SessionGVM extends Notifier<SessionUser> {
     Navigator.popAndPushNamed(mContext, "/login");
   }
 
+  // 절대 SessionUser가 있을 수 없는 상태
   Future<void> autoLogin() async {
-    Future.delayed(
-      Duration(seconds: 3),
-      () {
-        Navigator.popAndPushNamed(mContext, "/login");
-      },
+    // 1. Storage에서 Token 가져오기
+    String? accessToken = await secureStorage.read(key: "accessToken");
+    // 2. Token이 비어있으면 로그인 화면으로
+    if (accessToken == null) {
+      Navigator.popAndPushNamed(mContext, "/login");
+      return;
+    }
+    // 3. Token이 있으면 통신
+    Map<String, dynamic> responseBody =
+        await userRepository.autoLogin(accessToken);
+    // 4. 통신 결과가 실패면 로그인 화면으로 >> Token이 유효하지 않을 경우
+    if (!responseBody["success"]) {
+      Navigator.popAndPushNamed(mContext, "/login");
+      return;
+    }
+    // 5. 통신 성공시 상태 갱신 후 메인 화면
+    Map<String, dynamic> data = responseBody["response"];
+    state = SessionUser(
+      id: data["id"],
+      username: data["username"],
+      accessToken: accessToken,
+      isLogin: true,
     );
+
+    dio.options.headers = {"Authorization": accessToken};
+
+    Navigator.popAndPushNamed(mContext, "/post/list");
   }
 }
 
