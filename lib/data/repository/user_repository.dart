@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_blog/_core/utils/my_http.dart';
-import 'package:logger/logger.dart';
 
 class UserRepository {
   const UserRepository();
@@ -13,7 +12,7 @@ class UserRepository {
 
     // final 쓰지말고 타입을 적어 혼동을 피함
     Map<String, dynamic> body = response.data;
-    Logger().d(body); // test 코드 작성 - 직접해보기
+    // Logger().d(body); // test 코드 작성 - 직접해보기
     return body;
   }
 
@@ -26,13 +25,13 @@ class UserRepository {
     );
 
     Map<String, dynamic> body = response.data;
-    Logger().d(body);
+    // Logger().d(body);
 
     // 토큰 받아오기 >> 잘못된 입력일 경우 header가 null이라서 try-catch를 사용하여 예외처리
     String accessToken = "";
     try {
       accessToken = response.headers["Authorization"]![0];
-      Logger().d(accessToken);
+      // Logger().d(accessToken);
     } catch (e) {}
 
     return (body, accessToken);

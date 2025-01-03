@@ -3,7 +3,6 @@ import 'package:flutter_blog/_core/utils/my_http.dart';
 import 'package:flutter_blog/data/repository/user_repository.dart';
 import 'package:flutter_blog/main.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logger/logger.dart';
 
 class SessionUser {
   int? id;
@@ -11,7 +10,7 @@ class SessionUser {
   String? accessToken;
   bool? isLogin;
 
-  SessionUser({this.id, this.username, this.accessToken, this.isLogin});
+  SessionUser({this.id, this.username, this.accessToken, this.isLogin = false});
 }
 
 class SessionGVM extends Notifier<SessionUser> {
@@ -62,7 +61,7 @@ class SessionGVM extends Notifier<SessionUser> {
     dio.options.headers = {
       "Authorization": accessToken,
     };
-    Logger().d(dio.options.headers);
+    // Logger().d(dio.options.headers);
 
     Navigator.popAndPushNamed(mContext, "/post/list");
   }
@@ -87,7 +86,16 @@ class SessionGVM extends Notifier<SessionUser> {
     Navigator.pushNamed(mContext, "/login");
   }
 
-  Future<void> logout() async {}
+  Future<void> logout() async {
+    // 1. Storage에서 Token 삭제
+    await secureStorage.delete(key: "accessToken");
+
+    // 2. 상태 갱신
+    // 값을 비우면 null또는 기본값이 들어감
+    state = SessionUser();
+    // 3. 화면 이동
+    Navigator.popAndPushNamed(mContext, "/login");
+  }
 
   Future<void> autoLogin() async {
     Future.delayed(
