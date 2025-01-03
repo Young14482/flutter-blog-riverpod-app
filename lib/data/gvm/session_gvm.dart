@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_blog/_core/utils/my_http.dart';
 import 'package:flutter_blog/data/repository/user_repository.dart';
 import 'package:flutter_blog/main.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/logger.dart';
 
 class SessionUser {
   int? id;
@@ -23,7 +25,47 @@ class SessionGVM extends Notifier<SessionUser> {
         id: null, username: null, accessToken: null, isLogin: false);
   }
 
-  Future<void> login() async {}
+  Future<void> login(String username, String password) async {
+    final body = {
+      "username": username,
+      "password": password,
+    };
+
+    // 구조 분해 할당 사용
+    var (responseBody, accessToken) =
+        await userRepository.findByUsernameAndPassword(body);
+
+    // 응답 예외처리
+    if (!responseBody["success"]) {
+      ScaffoldMessenger.of(mContext!).showSnackBar(
+        SnackBar(content: Text("로그인 실패 : ${responseBody["errorMessage"]}")),
+      );
+      return;
+    }
+
+    // 1. accessToken을 Storage에 저장
+    await secureStorage.write(
+      key: "accessToken",
+      value: accessToken,
+    ); // I/O 라서 await 걸어야 함
+
+    // 2. SessionUser 상태 갱신
+    Map<String, dynamic> data = responseBody["response"];
+    state = SessionUser(
+      id: data["id"],
+      username: data["username"],
+      accessToken: accessToken,
+      isLogin: true,
+    );
+
+    // 3. Dio에 토큰 세팅
+    dio.options.headers = {
+      "Authorization": accessToken,
+    };
+    Logger().d(dio.options.headers);
+
+    Navigator.popAndPushNamed(mContext, "/post/list");
+  }
 
   Future<void> join(String username, String email, String password) async {
     // 레포지토리에 요청

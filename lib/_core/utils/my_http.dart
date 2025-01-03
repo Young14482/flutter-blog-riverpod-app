@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+// TODO 자기 ip사용
 final baseUrl = "http://192.168.0.96:8080";
 
 //로그인 되면, dio에 jwt 추가하기
