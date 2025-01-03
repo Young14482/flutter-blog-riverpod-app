@@ -1,4 +1,5 @@
 import 'package:flutter_blog/data/model/user.dart';
+import 'package:intl/intl.dart';
 
 class Post {
   int? id;
@@ -15,8 +16,8 @@ class Post {
       : id = map["id"],
         title = map["title"],
         content = map["content"],
-        createdAt = map["createdAt"],
-        updatedAt = map["updatedAt"],
+        createdAt = DateFormat("yyyy-mm-dd").parse(map["createdAt"]),
+        updatedAt = DateFormat("yyyy-mm-dd").parse(map["updatedAt"]),
         bookmarkCount = map["bookmarkCount"],
         user = User.fromMap(map["user"]),
         isBookmark = map["isBookmark"];
