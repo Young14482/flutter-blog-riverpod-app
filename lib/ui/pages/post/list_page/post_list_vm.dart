@@ -12,6 +12,32 @@ class PostListModel {
   int totalPage;
   List<Post> posts;
 
+  PostListModel({
+    required this.isFirst,
+    required this.isLast,
+    required this.pageNumber,
+    required this.size,
+    required this.totalPage,
+    required this.posts,
+  });
+
+  PostListModel copyWith(
+      {bool? isFirst,
+      bool? isLast,
+      int? pageNumber,
+      int? size,
+      int? totalPage,
+      List<Post>? posts}) {
+    return PostListModel(
+      isFirst: isFirst ?? this.isFirst,
+      isLast: isLast ?? this.isLast,
+      pageNumber: pageNumber ?? this.pageNumber,
+      size: size ?? this.size,
+      totalPage: totalPage ?? this.totalPage,
+      posts: posts ?? this.posts,
+    );
+  }
+
   PostListModel.fromMap(Map<String, dynamic> map)
       : isFirst = map["isFirst"],
         isLast = map["isLast"],
@@ -54,5 +80,21 @@ class PostListVM extends Notifier<PostListModel?> {
     }
 
     state = PostListModel.fromMap(responseBody["response"]);
+  }
+
+  void remove(int id) {
+    PostListModel model = state!; // 얕은 복사
+
+    model.posts = model.posts.where((p) => p.id != id).toList(); // 깊은 복사 발생
+
+    state = state!.copyWith(posts: model.posts); // 기존 값을 유지한 채 바꾸고 싶은 값만 넣어서 변경
+  }
+
+  void add(Post post) {
+    PostListModel model = state!;
+
+    model.posts = [post, ...model.posts];
+
+    state = state!.copyWith(posts: model.posts);
   }
 }

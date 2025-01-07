@@ -21,7 +21,8 @@ class PostListBody extends ConsumerWidget {
               Navigator.push(
                   // 페이지 넘어가는 부분인데 라우터(주소)로 설계 안한 이유? >> 매개변수를 던져야 해서
                   context,
-                  MaterialPageRoute(builder: (_) => PostDetailPage()));
+                  MaterialPageRoute(
+                      builder: (_) => PostDetailPage(model.posts[index].id!)));
             },
             child: PostListItem(post: model.posts[index]),
           );
