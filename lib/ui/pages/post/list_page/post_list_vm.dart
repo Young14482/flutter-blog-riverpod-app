@@ -3,6 +3,7 @@ import 'package:flutter_blog/data/model/post.dart';
 import 'package:flutter_blog/data/repository/post_repository.dart';
 import 'package:flutter_blog/main.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 class PostListModel {
   bool isFirst;
@@ -59,27 +60,28 @@ final postListProvider = NotifierProvider<PostListVM, PostListModel?>(() {
 });
 
 class PostListVM extends Notifier<PostListModel?> {
+  final refreshCtrl = RefreshController();
   final mContext = navigatorKey.currentContext!; // !는 상황에 맞게
   PostRepository postRepository = const PostRepository();
 
   @override
   PostListModel? build() {
-    init(0);
+    init();
     return null;
   }
 
-  Future<void> init(int page) async {
-    Map<String, dynamic> responseBody =
-        await postRepository.findAll(page: page);
+  // init은 초기화의 책임을 가짐
+  Future<void> init() async {
+    Map<String, dynamic> responseBody = await postRepository.findAll(page: 0);
     if (!responseBody["success"]) {
-      ScaffoldMessenger.of(mContext!).showSnackBar(
+      ScaffoldMessenger.of(mContext).showSnackBar(
         SnackBar(
             content: Text("게시글 목록 보기 실패 : ${responseBody["errorMessage"]}")),
       );
       return;
     }
-
     state = PostListModel.fromMap(responseBody["response"]);
+    refreshCtrl.refreshCompleted();
   }
 
   void remove(int id) {
@@ -96,5 +98,30 @@ class PostListVM extends Notifier<PostListModel?> {
     model.posts = [post, ...model.posts];
 
     state = state!.copyWith(posts: model.posts);
+  }
+
+  // 페이징
+  Future<void> nextList() async {
+    PostListModel model = state!;
+    if (model.isLast) {
+      await Future.delayed(Duration(milliseconds: 500));
+      refreshCtrl.loadComplete();
+      return;
+    }
+
+    Map<String, dynamic> responseBody =
+        await postRepository.findAll(page: state!.pageNumber + 1);
+    if (!responseBody["success"]) {
+      ScaffoldMessenger.of(mContext).showSnackBar(
+        SnackBar(content: Text("게시글 로드 실패 : ${responseBody["errorMessage"]}")),
+      );
+      return;
+    }
+    PostListModel prevModel = state!;
+    PostListModel nextModel = PostListModel.fromMap(responseBody["response"]);
+
+    // nextModel을 기준으로 복사해야 posts이외의 정보를 담을 수 있음
+    state = nextModel.copyWith(posts: [...prevModel.posts, ...nextModel.posts]);
+    refreshCtrl.loadComplete();
   }
 }
